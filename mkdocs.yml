@@ -3,7 +3,7 @@ site_name: MkDocs Bootswatch Themes
 repo_url: https://github.com/motii8128/ESCL
 
 theme:
-  name: slate
+  name: flatly
   palette:
     primary: black
     scheme: slate
