@@ -1,34 +1,47 @@
-#include <WiFi.h>
-#include <WiFiUdp.h>
+#include "ECL.hpp"
 
-const char ssid[] = "ESP32_Server";       // SSID
-const char password[] = "1234567890";     // password
-const int localPort = 10000;              // ポート番号
-const IPAddress ip(127, 0, 0, 1);       // ServerのIPアドレス
-const IPAddress gateway(192, 168, 4, 1);  // gatewayのIPアドレス
-const IPAddress subnet(255, 255, 255, 0); // サブネットマスク
-
-WiFiUDP udp;
-char packetBuffer[256];
-
-void setup() {
-  Serial.begin(115200);
-
-  WiFi.softAP(ssid, password);
-  delay(100);
-  WiFi.softAPConfig(ip, gateway, subnet);
-
-  Serial.println("Starting UDP");
-  udp.begin(localPort);
-}
-
-void loop() {
-  while (1) {
-    int packetSize = udp.parsePacket();
-    if (packetSize) {
-      for (int i = 0 ; i < 256 ; i++ ) packetBuffer[i] = 0;
-      udp.read(packetBuffer, 256);
-      Serial.println(packetBuffer);
+void ECLNode::init(const char *ssid, const char *passward, uint16_t port)
+{
+  Serial.println("\n\n");
+  int i = 0;
+  bool flag = true;
+  WiFi.begin(ssid, passward);
+  while(WiFi.status() != WL_CONNECTED)
+  {
+    i++;
+    Serial.printf(".");
+    delay(50);
+    if(i > 30)
+    {
+      flag = false;
+      break;
     }
   }
+
+  if(flag == true)
+  {
+    strcpy(ssid_, ssid);
+    Serial.printf("[ECL]Successed connect to ");
+    Serial.println(ssid_);
+    wifi_udp_.begin(port);
+    Serial.println("[ECL]Start UDP Client");
+  }
+}
+
+const char *ECLNode::get_ssid()
+{
+  return ssid_;
+}
+
+void ECLNode::set_destination(const char *address, uint16_t port)
+{
+  server_ip_.fromString(address);
+  port_ = port;
+}
+
+void ECLNode::send_message(const char *buf)
+{
+  wifi_udp_.beginPacket(server_ip_, port_);
+  wifi_udp_.printf(buf);
+  wifi_udp_.endPacket();
 }
